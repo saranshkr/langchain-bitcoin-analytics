@@ -1,0 +1,14 @@
+# Core Python Libraries
+python-dotenv
+requests
+pandas
+
+# Langchain Core + Ollama Integration
+langchain
+langchain-ollama
+
+# Neo4j Integration
+neo4j
+
+# Optional (used for prompt templates)
+langchain-core
