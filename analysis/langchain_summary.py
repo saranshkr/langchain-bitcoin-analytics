@@ -31,27 +31,54 @@ def fetch_prices(n=10):
         )
         return list(result)
 
-def summarize_data(data):
-    """Generate NLP summary using Mistral."""
-    price_series = [f"{record['time']}: ${record['price']}" for record in data]
-    volume_series = [f"${record['volume']}" for record in data]
+
+def get_top_wallets(n=3):
+    """Query Neo4j for top n most active receiving wallets."""
+    with driver.session() as session:
+        result = session.run(
+            """
+            MATCH (w:Wallet)<-[:RECEIVED_BY]-(:Transaction)
+            RETURN w.address AS address, count(*) AS received_count
+            ORDER BY received_count DESC
+            LIMIT $n
+            """, {"n": n}
+        )
+        return list(result)
+
+
+def summarize_data(price_data, wallet_data):
+    price_series = [f"{record['time']}: ${record['price']}" for record in price_data]
+
+    wallet_lines = [f"{w['address']}: {w['received_count']} txns received" for w in wallet_data]
+    wallet_info = "\n".join(wallet_lines)
 
     prompt = ChatPromptTemplate.from_template("""
-    You are a data analyst. Here is a time series of Bitcoin prices:
+    You are a data analyst. Here is Bitcoin time series price data:
 
-    {data}
+    {price_data}
 
-    Summarize the trends you observe. Mention any increase, decrease, or stability in price and volume. Keep it short and precise.
+    And here is wallet activity:
+
+    {wallet_data}
+
+    Provide a short, clear summary covering price trends and wallet activity.
     """)
 
-    formatted = prompt.format_messages(data="\n".join(price_series))
+    formatted = prompt.format_messages(
+        price_data="\n".join(price_series),
+        wallet_data=wallet_info
+    )
     response = llm.invoke(formatted)
     return response.content
 
+
 if __name__ == "__main__":
     print("📡 Fetching Bitcoin data from Neo4j...")
-    data = fetch_prices()
-    print("🧠 Generating summary using Mistral...\n")
-    summary = summarize_data(data)
+    price_data = fetch_prices()
+    wallet_data = get_top_wallets()
+
+    print("🧠 Generating combined summary...\n")
+    summary = summarize_data(price_data, wallet_data)
+
     print("🔍 NLP Summary:\n")
     print(summary)
