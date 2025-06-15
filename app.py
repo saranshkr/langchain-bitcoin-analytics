@@ -9,6 +9,9 @@ import altair as alt
 from datetime import datetime
 from dotenv import load_dotenv
 from neo4j import GraphDatabase
+from analysis.langchain_qa import run_qa_question, llm
+from neo4j.time import Date, DateTime, Time, Duration
+
 
 # Load environment variables and connect to Neo4j
 load_dotenv()
@@ -86,10 +89,24 @@ def run_custom_query(query):
         result = session.run(query)
         return [dict(r) for r in result]
 
+
 def flatten_value(val):
+    # If it's a Neo4j node or relationship, unpack its properties
     if hasattr(val, "_properties"):
-        return val._properties
-    return str(val)
+        return {k: flatten_value(v) for k, v in val._properties.items()}
+
+    # Neo4j datetime types → convert to string
+    if isinstance(val, (Date, DateTime, Time, Duration)):
+        return str(val)
+
+    # Neo4j record values may come in list or dict
+    if isinstance(val, list):
+        return [flatten_value(v) for v in val]
+
+    if isinstance(val, dict):
+        return {k: flatten_value(v) for k, v in val.items()}
+
+    return val
 
 # UI setup
 st.set_page_config(page_title="Bitcoin Analytics Dashboard", layout="wide")
@@ -199,6 +216,7 @@ with tab4:
     try:
         df_days = get_daily_txn_counts()
         if not df_days.empty:
+            df_days["day"] = df_days["day"].astype(str)
             st.line_chart(df_days.set_index("day"))
         else:
             st.info("Not enough data for daily volume chart.")
@@ -207,33 +225,66 @@ with tab4:
 
 # Tab 5: Query Explorer
 with tab5:
-    st.markdown("### 💬 Run Custom Cypher Queries")
+    st.markdown("### 💬 Query Explorer & Q&A")
 
-    sample_queries = {
-        "Show 5 Wallets": "MATCH (w:Wallet) RETURN w LIMIT 5",
-        "Show 5 Transactions": "MATCH (t:Transaction) RETURN t LIMIT 5",
-        "Transactions by wallet_017": "MATCH (w:Wallet {address: 'wallet_017'})-[:SENT]->(t:Transaction)-[:RECEIVED_BY]->(r:Wallet) RETURN r.address AS receiver, t.tx_id AS tx_id",
-        "Top 5 Receivers": "MATCH (w:Wallet)<-[:RECEIVED_BY]-() RETURN w.address AS wallet, count(*) AS received ORDER BY received DESC LIMIT 5",
-        "Last 24h Transactions": "MATCH (t:Transaction) WHERE datetime(t.timestamp) > datetime() - duration('P1D') RETURN t.tx_id, t.timestamp, t.price_usd",
-        "Transaction Volume Per Day (7 days)": "MATCH (t:Transaction) WHERE datetime(t.timestamp) >= datetime() - duration('P7D') RETURN date(datetime(t.timestamp)) AS day, count(*) AS txn_count ORDER BY day",
-        "Received by wallet_017 in last 24h": "MATCH (t:Transaction)-[:RECEIVED_BY]->(w:Wallet {address: 'wallet_017'}) WHERE datetime(t.timestamp) > datetime() - duration('P1D') RETURN t.tx_id, t.timestamp"
-    }
+    mode = st.radio("Choose input mode:", ["Cypher Query", "Natural Language Question"], horizontal=True)
 
-    query_choice = st.selectbox("▶ Select a sample query:", options=["(choose one)"] + list(sample_queries.keys()))
-    if query_choice != "(choose one)":
-        default_query = sample_queries[query_choice]
+    if mode == "Cypher Query":
+        sample_queries = {
+            "Show 5 Wallets": "MATCH (w:Wallet) RETURN w LIMIT 5",
+            "Show 5 Transactions": "MATCH (t:Transaction) RETURN t LIMIT 5",
+            "Transactions by wallet_017": "MATCH (w:Wallet {address: 'wallet_017'})-[:SENT]->(t:Transaction)-[:RECEIVED_BY]->(r:Wallet) RETURN r.address AS receiver, t.tx_id AS tx_id",
+            "Top 5 Receivers": "MATCH (w:Wallet)<-[:RECEIVED_BY]-() RETURN w.address AS wallet, count(*) AS received ORDER BY received DESC LIMIT 5",
+            "Last 24h Transactions": "MATCH (t:Transaction) WHERE datetime(t.timestamp) > datetime() - duration('P1D') RETURN t.tx_id, t.timestamp, t.price_usd",
+            "Transaction Volume Per Day (7 days)": "MATCH (t:Transaction) WHERE datetime(t.timestamp) >= datetime() - duration('P7D') RETURN date(datetime(t.timestamp)) AS day, count(*) AS txn_count ORDER BY day",
+            "Received by wallet_017 in last 24h": "MATCH (t:Transaction)-[:RECEIVED_BY]->(w:Wallet {address: 'wallet_017'}) WHERE datetime(t.timestamp) > datetime() - duration('P1D') RETURN t.tx_id, t.timestamp"
+        }
+
+        query_choice = st.selectbox("▶ Select a sample query:", options=["(choose one)"] + list(sample_queries.keys()))
+        default_query = sample_queries.get(query_choice, "MATCH (n) RETURN n LIMIT 5")
+
+        query_input = st.text_area("Enter Cypher Query:", default_query, height=150)
+
+        if st.button("Run Query"):
+            try:
+                records = run_custom_query(query_input)
+                flat_records = [{k: flatten_value(v) for k, v in row.items()} for row in records]
+                st.dataframe(pd.DataFrame(flat_records))
+            except Exception as e:
+                st.error(f"⚠️ Error running query: {e}")
+
     else:
-        default_query = "MATCH (n) RETURN n LIMIT 5"
+        st.markdown("### 🤖 Ask a Question")
 
-    query_input = st.text_area("Enter Cypher Query:", default_query, height=150)
+        user_q = st.text_input("Enter your question:", placeholder="e.g., Which wallets sent transactions yesterday?")
 
-    if st.button("Run Query"):
-        try:
-            records = run_custom_query(query_input)
-            flat_records = [{k: flatten_value(v) for k, v in row.items()} for row in records]
-            st.dataframe(pd.DataFrame(flat_records))
-        except Exception as e:
-            st.error(f"⚠️ Error running query: {e}")
+        if st.button("Generate Cypher Query"):
+            with st.spinner("🔄 Generating Cypher query and explanation..."):
+                query, _ = run_qa_question(user_q)
+                st.session_state["generated_query"] = query
+                explain_prompt = f"Explain the following Cypher query in 2-3 sentences:\n\n{query}"
+                st.session_state["explanation"] = llm.invoke(explain_prompt).content.strip()
+
+        if "generated_query" in st.session_state:
+            st.markdown("#### 🧠 Generated Cypher Query (editable)")
+            edited_query = st.text_area(
+                "Modify the query before running it:",
+                value=st.session_state["generated_query"],
+                height=150,
+                key="editable_query"
+            )
+
+            with st.expander("🧾 Explanation of this query"):
+                st.markdown(st.session_state["explanation"])
+
+            if st.button("Run Edited Query"):
+                try:
+                    records = run_custom_query(edited_query)
+                    flat_records = [{k: flatten_value(v) for k, v in row.items()} for row in records]
+                    df = pd.DataFrame(flat_records)
+                    st.dataframe(df)
+                except Exception as e:
+                    st.error(f"⚠️ Error running query: {e}")
 
 
 # Footer
