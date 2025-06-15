@@ -1,14 +1,24 @@
-# Core Python Libraries
+# Core
 python-dotenv
 requests
 pandas
 
-# Langchain Core + Ollama Integration
+# Langchain + Ollama
 langchain
 langchain-ollama
 
 # Neo4j Integration
 neo4j
 
-# Optional (used for prompt templates)
-langchain-core
+# Visualization
+matplotlib
+networkx
+pyvis==0.3.1
+altair
+
+# Dashboard
+streamlit
+streamlit-autorefresh  # Optional: for live updating dashboards
+
+# Optional: if using notebook-based prototyping
+notebook

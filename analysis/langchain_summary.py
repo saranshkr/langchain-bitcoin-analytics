@@ -82,3 +82,6 @@ if __name__ == "__main__":
 
     print("🔍 NLP Summary:\n")
     print(summary)
+
+    with open("latest_summary.txt", "w") as f:
+        f.write(summary)
