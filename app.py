@@ -176,7 +176,7 @@ with tab4:
     except Exception as e:
         st.error(f"Unable to load top receivers: {e}")
 
-    st.markdown("#### 📅 Daily Transaction Volume (Last 7 Days)")
+    st.markdown("#### 📅 Daily Transaction Counts (Last 7 Days)")
     try:
         df_days = get_daily_txn_counts()
         if not df_days.empty:
