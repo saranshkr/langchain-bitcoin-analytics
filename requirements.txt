@@ -6,6 +6,7 @@ pandas
 # Langchain + Ollama
 langchain
 langchain-ollama
+langchain-community
 
 # Neo4j Integration
 neo4j
@@ -18,7 +19,7 @@ altair
 
 # Dashboard
 streamlit
-streamlit-autorefresh  # Optional: for live updating dashboards
+streamlit-autorefresh
 
 # Optional: if using notebook-based prototyping
 notebook

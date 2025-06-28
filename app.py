@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from neo4j import GraphDatabase
 from analysis.langchain_qa import run_qa_question, llm
 from neo4j.time import Date, DateTime, Time, Duration
+from streamlit_autorefresh import st_autorefresh
 
 
 # Load environment variables and connect to Neo4j
@@ -110,6 +111,10 @@ def flatten_value(val):
 
 # UI setup
 st.set_page_config(page_title="Bitcoin Analytics Dashboard", layout="wide")
+enable_refresh = st.sidebar.checkbox("Auto-Refresh", value=True)
+if enable_refresh:
+    st_autorefresh(interval=60000, key="auto-refresh")
+
 st.title("📊 Real-time Bitcoin Analytics Dashboard")
 
 # Tabs
@@ -240,7 +245,7 @@ with tab5:
             "Received by wallet_017 in last 24h": "MATCH (t:Transaction)-[:RECEIVED_BY]->(w:Wallet {address: 'wallet_017'}) WHERE datetime(t.timestamp) > datetime() - duration('P1D') RETURN t.tx_id, t.timestamp"
         }
 
-        query_choice = st.selectbox("▶ Select a sample query:", options=["(choose one)"] + list(sample_queries.keys()))
+        query_choice = st.selectbox("Select a sample query:", options=["(choose one)"] + list(sample_queries.keys()))
         default_query = sample_queries.get(query_choice, "MATCH (n) RETURN n LIMIT 5")
 
         query_input = st.text_area("Enter Cypher Query:", default_query, height=150)
@@ -258,8 +263,14 @@ with tab5:
 
         user_q = st.text_input("Enter your question:", placeholder="e.g., Which wallets sent transactions yesterday?")
 
+        if "generated_query" not in st.session_state:
+            st.session_state["generated_query"] = ""
+        if "explanation" not in st.session_state:
+            st.session_state["explanation"] = ""
+
+
         if st.button("Generate Cypher Query"):
-            with st.spinner("🔄 Generating Cypher query and explanation..."):
+            with st.spinner("Generating Cypher query and explanation..."):
                 query, _ = run_qa_question(user_q)
                 st.session_state["generated_query"] = query
                 explain_prompt = f"Explain the following Cypher query in 2-3 sentences:\n\n{query}"

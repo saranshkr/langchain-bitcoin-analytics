@@ -7,66 +7,78 @@ from neo4j import GraphDatabase
 from langchain_core.prompts import PromptTemplate
 from langchain_ollama import ChatOllama
 
-# Load env variables and connect
+# Load environment variables
 load_dotenv()
 URI = os.getenv("NEO4J_URI")
 USER = os.getenv("NEO4J_USER")
 PASSWORD = os.getenv("NEO4J_PASSWORD")
 driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
 
-# Initialize local LLM
-llm = ChatOllama(model="mistral")
+# Choose model source here
+llm = ChatOllama(model="mistral", temperature=0.0)
 
-# Few-shot prompt: user question → Cypher query
+# Cypher generation prompt
 TEMPLATE = """
-You are an expert Cypher developer. Convert the following natural language question into a Cypher query using the schema below.
+You are an expert Cypher developer assisting a user in querying a property graph database using natural language. 
+Use the following schema to generate accurate and executable Cypher queries.
 
 Graph Schema:
 (:Wallet)-[:SENT]->(:Transaction)-[:RECEIVED_BY]->(:Wallet)
-Transaction has properties: timestamp, tx_id, price_usd, market_cap, volume_24h
 
-Rules:
-- Use clear variable names and Cypher best practices.
-- If you need to compute a value using an alias (e.g., abs(sent - received)), first define the counts in one WITH clause, then use a second WITH clause for the computation.
-- Never reuse an alias in the same WITH clause where it’s defined.
-- Return meaningful data — not whole nodes unless explicitly requested.
-- Output ONLY the Cypher query, nothing else.
-- The query must be immediately executable in Neo4j.
+Transaction node properties:
+- timestamp (datetime)
+- tx_id (string)
+- price_usd (float)
+- market_cap (float)
+- volume_24h (float)
+
+Guidelines:
+- Use clear, consistent variable names like `wallet`, `txn`, `volume`, `received_count`, etc.
+- Use multiple WITH clauses for complex logic or intermediate aggregations.
+- Never reuse an alias in the same WITH clause where it’s being defined.
+- Return only specific scalar properties (e.g., `wallet.address`, `txn.tx_id`) unless asked for whole nodes.
+- Prefer aggregations like `count()`, `sum()`, `avg()`, `max()` over `collect()`, unless lists are required.
+- Do not include comments, explanations, or extra spacing — only the final Cypher query.
+- Your output must be syntactically correct and ready to execute in Neo4j without modification.
+- If the question is ambiguous, make a useful, reasonable assumption and generate the best-fit query.
+- If the user refers to an earlier question (e.g., “same as before”), handle context appropriately for follow-ups.
 
 Examples:
 
-Q: Show 5 wallet addresses
-A:
-MATCH (w:Wallet)
-RETURN w.address
+Q: Show the addresses of the first 5 wallets  
+A:  
+MATCH (w:Wallet)  
+RETURN w.address  
 LIMIT 5
 
-Q: Transactions in the last 24 hours
-A:
-MATCH (t:Transaction)
-WHERE datetime(t.timestamp) > datetime() - duration('P1D')
-RETURN t.tx_id, t.timestamp
+Q: What are the total number of transactions in the last 24 hours?  
+A:  
+MATCH (t:Transaction)  
+WHERE datetime(t.timestamp) > datetime() - duration('P1D')  
+RETURN count(*) AS txn_count
 
-Q: Top 3 receivers yesterday
-A:
-MATCH (t:Transaction)-[:RECEIVED_BY]->(w:Wallet)
-WHERE date(datetime(t.timestamp)) = date() - duration('P1D')
-RETURN w.address AS wallet, count(*) AS received
-ORDER BY received DESC
-LIMIT 3
+Q: Who received the highest transaction volume this week?  
+A:  
+MATCH (t:Transaction)-[:RECEIVED_BY]->(w:Wallet)  
+WHERE datetime(t.timestamp) > datetime() - duration('P7D')  
+WITH w, sum(t.volume_24h) AS total_volume  
+RETURN w.address AS wallet, total_volume  
+ORDER BY total_volume DESC  
+LIMIT 1
 
 Q: {question}
+
 A:
 """
 
 prompt = PromptTemplate(input_variables=["question"], template=TEMPLATE)
 
-def run_qa_question(question):
+def run_qa_question(question: str):
     formatted_prompt = prompt.format(question=question)
     cypher = llm.invoke(formatted_prompt).content.strip()
 
-    print("\n📥 Prompt:\n", formatted_prompt)
-    print("\n📤 Generated Cypher:\n", cypher)
+    print("\nQuestion:", question)
+    print("\nGenerated Cypher:\n", cypher)
 
     try:
         with driver.session() as session:
@@ -76,6 +88,7 @@ def run_qa_question(question):
     except Exception as e:
         return cypher, f"❌ Error running query: {e}"
 
+# CLI testing
 if __name__ == "__main__":
     user_q = input("🔍 Ask a question: ")
     query, output = run_qa_question(user_q)
