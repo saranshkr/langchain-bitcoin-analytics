@@ -55,7 +55,7 @@ def plot_price_volume(df, output_file="btc_price_volume.png"):
         ax2.set_yticks([])
         ax2.set_ylabel("Volume (insufficient data)", color="gray")
 
-    plt.title("Bitcoin Price (Moving Avg) and Volume - Last 2 Days")
+    plt.title("Bitcoin Price (Moving Avg) and Volume - Last 7 Days")
     fig.tight_layout()
     plt.savefig(output_file)
     print(f"✅ Chart saved as {output_file}")

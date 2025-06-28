@@ -14,7 +14,7 @@ def render():
     if mode == "Cypher Query":
         sample_queries = {
             "Show 5 Wallets": "MATCH (w:Wallet) RETURN w LIMIT 5",
-            "Show 5 Transactions": "MATCH (t:Transaction) RETURN t LIMIT 5",
+            "Show 5 Transactions": "MATCH (t:Transaction) RETURN t.tx_id, t.timestamp, t.price_usd LIMIT 5",
             "Transactions by wallet_017": "MATCH (w:Wallet {address: 'wallet_017'})-[:SENT]->(t:Transaction)-[:RECEIVED_BY]->(r:Wallet) RETURN r.address AS receiver, t.tx_id AS tx_id",
             "Top 5 Receivers": "MATCH (w:Wallet)<-[:RECEIVED_BY]-() RETURN w.address AS wallet, count(*) AS received ORDER BY received DESC LIMIT 5",
             "Last 24h Transactions": "MATCH (t:Transaction) WHERE datetime(t.timestamp) > datetime() - duration('P1D') RETURN t.tx_id, t.timestamp, t.price_usd",

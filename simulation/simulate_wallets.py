@@ -34,7 +34,7 @@ def simulate_wallet_links():
         count = 0
         for record in txns:
             timestamp = record["ts"]
-            tx_id = generate_tx_id(timestamp)
+            tx_id = generate_tx_id(str(timestamp))  # ensure it's a string
             sender = random.choice(WALLET_POOL)
             receivers = random.sample([w for w in WALLET_POOL if w != sender], random.choice([1, 2]))
             session.execute_write(link_wallets, timestamp, tx_id, sender, receivers)
@@ -43,21 +43,21 @@ def simulate_wallet_links():
         print(f"✅ Simulated wallets for {count} new transaction(s)")
 
 def link_wallets(tx, timestamp, tx_id, sender, receivers):
-    # Link sender
+    # Link sender to transaction
     tx.run("""
         MERGE (s:Wallet {address: $sender})
-        MERGE (t:Transaction {timestamp: $timestamp})
-        SET t.tx_id = $tx_id, t.simulated = true
+        MERGE (t:Transaction {tx_id: $tx_id})
+        SET t.timestamp = $timestamp, t.simulated = true
         MERGE (s)-[:SENT]->(t)
     """, timestamp=timestamp, tx_id=tx_id, sender=sender)
 
-    # Link receivers
+    # Link receivers to transaction
     for r in receivers:
         tx.run("""
             MERGE (r:Wallet {address: $receiver})
-            MERGE (t:Transaction {timestamp: $timestamp})
+            MERGE (t:Transaction {tx_id: $tx_id})
             MERGE (t)-[:RECEIVED_BY]->(r)
-        """, timestamp=timestamp, receiver=r)
+        """, tx_id=tx_id, receiver=r)
 
 if __name__ == "__main__":
     simulate_wallet_links()

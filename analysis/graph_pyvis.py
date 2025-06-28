@@ -15,13 +15,14 @@ PASSWORD = os.getenv("NEO4J_PASSWORD")
 # Connect to Neo4j
 driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
 
-def fetch_graph_data():
-    query = '''
+def fetch_graph_data(limit=30):
+    query = f'''
     MATCH (w:Wallet)-[:SENT]->(t:Transaction)
     RETURN w.address AS from, t.tx_id AS to
     UNION
     MATCH (t:Transaction)-[:RECEIVED_BY]->(w:Wallet)
     RETURN t.tx_id AS from, w.address AS to
+    LIMIT {limit}
     '''
     with driver.session() as session:
         result = session.run(query)
