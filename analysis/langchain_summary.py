@@ -18,16 +18,20 @@ driver = GraphDatabase.driver(
 # Use Mistral model running locally via Ollama
 llm = ChatOllama(model="mistral")
 
-def fetch_prices(n=10):
-    """Fetch Bitcoin price data from Neo4j."""
+def fetch_prices():
+    """Fetch daily average, max, and min Bitcoin price for the last 7 days."""
     with driver.session() as session:
         result = session.run(
             """
             MATCH (t:Transaction)
-            RETURN t.timestamp AS time, t.price_usd AS price, t.volume_24h AS volume
-            ORDER BY t.timestamp ASC
-            LIMIT $n
-            """, {"n": n}
+            WHERE datetime(t.timestamp) >= datetime() - duration('P7D')
+            WITH date(datetime(t.timestamp)) AS day, 
+                 avg(t.price_usd) AS avg_price,
+                 max(t.price_usd) AS max_price, 
+                 min(t.price_usd) AS min_price
+            RETURN day, avg_price, max_price, min_price
+            ORDER BY day
+            """
         )
         return list(result)
 
@@ -47,7 +51,10 @@ def get_top_wallets(n=3):
 
 
 def summarize_data(price_data, wallet_data):
-    price_series = [f"{record['time']}: ${record['price']}" for record in price_data]
+    price_series = [
+        f"{record['day']}: avg=${record['avg_price']:.2f}, max=${record['max_price']:.2f}, min=${record['min_price']:.2f}"
+        for record in price_data
+    ]
 
     wallet_lines = [f"{w['address']}: {w['received_count']} txns received" for w in wallet_data]
     wallet_info = "\n".join(wallet_lines)

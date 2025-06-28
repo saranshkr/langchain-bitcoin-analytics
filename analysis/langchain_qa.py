@@ -27,7 +27,7 @@ Graph Schema:
 
 Transaction node properties:
 - timestamp (datetime)
-- tx_id (string)
+- tx_id (string, unique identifier)
 - price_usd (float)
 - market_cap (float)
 - volume_24h (float)
