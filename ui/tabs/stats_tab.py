@@ -8,7 +8,7 @@ from ui.utils.autorefresh import auto_refresh
 
 
 def render():
-    st.markdown("### 📈 Node Statistics and Top Wallets")
+    st.markdown("### Node Statistics and Top Wallets")
     auto_refresh(
         interval=60,
         label="Stats refresh every minute.",
@@ -68,6 +68,6 @@ def render():
             df_days["day"] = df_days["day"].astype(str)
             st.line_chart(df_days.set_index("day"))
         else:
-            st.info("Not enough data for daily volume chart.")
+            st.info("Not enough data for daily transaction chart.")
     except Exception as e:
-        st.error(f"Unable to load daily volume chart: {e}")
+        st.error(f"Unable to load daily transaction count chart: {e}")

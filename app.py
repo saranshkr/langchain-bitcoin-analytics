@@ -20,7 +20,7 @@ driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
 
 # UI setup
 st.set_page_config(page_title="Bitcoin Analytics Dashboard", layout="wide")
-st.title("📊 Real-time Bitcoin Analytics Dashboard")
+st.title("Real-time Bitcoin Analytics Dashboard")
 
 # Tabs
 tab1, tab2, tab3, tab4, tab5 = st.tabs([

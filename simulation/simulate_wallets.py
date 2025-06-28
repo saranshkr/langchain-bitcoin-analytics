@@ -14,7 +14,7 @@ USER = os.getenv("NEO4J_USER")
 PASSWORD = os.getenv("NEO4J_PASSWORD")
 
 # Create a pool of fake wallet addresses
-WALLET_COUNT = 25
+WALLET_COUNT = 50
 WALLET_POOL = [f"wallet_{i:03d}" for i in range(WALLET_COUNT)]
 
 # Connect to Neo4j

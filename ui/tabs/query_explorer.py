@@ -7,7 +7,7 @@ from ui.utils.helpers import run_custom_query, flatten_value
 
 
 def render():
-    st.markdown("### 💬 Query Explorer & Q&A")
+    st.markdown("### Query Explorer & Q&A")
 
     mode = st.radio("Choose input mode:", ["Cypher Query", "Natural Language Question"], horizontal=True)
 
@@ -36,7 +36,7 @@ def render():
                 st.error(f"⚠️ Error running query: {e}")
 
     else:
-        st.markdown("### 🧠 Ask a Question")
+        st.markdown("#### Ask a Question")
 
         user_q = st.text_input("Enter your question:", placeholder="e.g., Which wallets sent transactions yesterday?")
 
@@ -53,7 +53,7 @@ def render():
                 st.session_state["explanation"] = llm.invoke(explain_prompt).content.strip()
 
         if "generated_query" in st.session_state:
-            st.markdown("#### 🧠 Generated Cypher Query (editable)")
+            st.markdown("#### Generated Cypher Query (editable)")
             edited_query = st.text_area(
                 "Modify the query before running it:",
                 value=st.session_state["generated_query"],

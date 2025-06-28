@@ -33,7 +33,7 @@ def plot_price_volume(df, output_file="btc_price_volume.png"):
     df.set_index("timestamp", inplace=True)
 
     # Filter to last 2 days
-    cutoff = datetime.datetime.now() - datetime.timedelta(days=2)
+    cutoff = datetime.datetime.now() - datetime.timedelta(days=7)
     df = df[df.index >= cutoff].copy()
 
     # Compute 5-point moving average for price

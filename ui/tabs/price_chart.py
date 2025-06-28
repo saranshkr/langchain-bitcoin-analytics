@@ -7,7 +7,7 @@ from ui.utils.autorefresh import auto_refresh
 
 
 def render():
-    st.markdown("### 📈 Bitcoin Price (5-pt Moving Average) & 24h Volume")
+    st.markdown("### Bitcoin Price (5-pt Moving Average) & 24h Volume")
     auto_refresh(
         interval=60, 
         run_script="analysis/price_chart.py", 

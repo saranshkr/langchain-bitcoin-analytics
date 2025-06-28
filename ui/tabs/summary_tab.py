@@ -6,7 +6,7 @@ from ui.utils.autorefresh import auto_refresh
 
 
 def render():
-    st.markdown("### 🧠 Langchain NLP Summary")
+    st.markdown("### Langchain NLP Summary")
     auto_refresh(
         interval=3600,
         run_script="analysis/langchain_summary.py",

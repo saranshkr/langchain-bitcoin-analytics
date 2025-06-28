@@ -8,7 +8,7 @@ from ui.utils.autorefresh import auto_refresh
 
 
 def render():
-    st.markdown("### 🔗 Wallet–Transaction Graph")
+    st.markdown("### Wallet-Transaction Graph")
     auto_refresh(
         interval=300,
         run_script="analysis/graph_pyvis.py",
