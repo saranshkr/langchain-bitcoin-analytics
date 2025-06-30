@@ -1,4 +1,5 @@
 # File: ui/tabs/query_explorer.py
+# Description: Streamlit tab for interactive Cypher query execution and natural language Q&A using LangChain
 
 import streamlit as st
 import pandas as pd

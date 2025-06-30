@@ -1,4 +1,5 @@
-# analysis/langchain_summary.py
+# File: analysis/langchain_summary.py
+# Description: Generates a natural language summary of recent Bitcoin prices and wallet activity using a local LLM (Mistral via Ollama)
 
 import os
 from dotenv import load_dotenv

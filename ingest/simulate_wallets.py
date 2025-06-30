@@ -1,4 +1,4 @@
-# File: simulation/simulate_wallets.py
+# File: ingest/simulate_wallets.py
 # Description: Simulates wallet activity for unlinked transactions in Neo4j
 
 import os
@@ -34,7 +34,7 @@ def simulate_wallet_links():
         count = 0
         for record in txns:
             timestamp = record["ts"]
-            tx_id = generate_tx_id(str(timestamp))  # ensure it's a string
+            tx_id = generate_tx_id(str(timestamp))
             sender = random.choice(WALLET_POOL)
             receivers = random.sample([w for w in WALLET_POOL if w != sender], random.choice([1, 2]))
             session.execute_write(link_wallets, timestamp, tx_id, sender, receivers)

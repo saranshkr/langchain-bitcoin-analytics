@@ -1,4 +1,5 @@
 # File: ui/utils/autorefresh.py
+# Description: Utility to enable optional auto-refresh in Streamlit tabs, with optional script execution
 
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh

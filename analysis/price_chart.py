@@ -32,12 +32,15 @@ def plot_price_volume(df, output_file="btc_price_volume.png"):
     df["timestamp"] = pd.to_datetime(df["timestamp"])
     df.set_index("timestamp", inplace=True)
 
-    # Filter to last 2 days
+    # Filter to last 7 days
     cutoff = datetime.datetime.now() - datetime.timedelta(days=7)
     df = df[df.index >= cutoff].copy()
 
     # Compute 5-point moving average for price
+    df = df[~df.index.duplicated(keep="first")]
+    df = df.dropna(subset=["price"]).copy()
     df["MA_5"] = df["price"].rolling(window=5).mean()
+    # print(df.head(10))
 
     fig, ax1 = plt.subplots(figsize=(12, 6))
     ax1.set_xlabel("Timestamp")

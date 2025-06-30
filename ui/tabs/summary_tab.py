@@ -1,4 +1,5 @@
 # File: ui/tabs/summary_tab.py
+# Description: Streamlit tab for displaying NLP-generated summaries of recent Bitcoin trends and wallet activity
 
 import streamlit as st
 import os

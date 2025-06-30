@@ -15,18 +15,23 @@ PASSWORD = os.getenv("NEO4J_PASSWORD")
 # Connect to Neo4j
 driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
 
-def fetch_graph_data(limit=30):
+def fetch_graph_data(limit=200):
     query = f'''
-    MATCH (w:Wallet)-[:SENT]->(t:Transaction)
-    RETURN w.address AS from, t.tx_id AS to
-    UNION
-    MATCH (t:Transaction)-[:RECEIVED_BY]->(w:Wallet)
-    RETURN t.tx_id AS from, w.address AS to
+    CALL {{
+        MATCH (w:Wallet)-[:SENT]->(t:Transaction)
+        RETURN w.address AS from, t.tx_id AS to, t.timestamp AS ts
+        UNION
+        MATCH (t:Transaction)-[:RECEIVED_BY]->(w:Wallet)
+        RETURN t.tx_id AS from, w.address AS to, t.timestamp AS ts
+    }}
+    RETURN from, to
+    ORDER BY ts DESC
     LIMIT {limit}
     '''
     with driver.session() as session:
         result = session.run(query)
         return [(record["from"], record["to"]) for record in result]
+
 
 def create_pyvis_graph(edges, output_file="wallet_graph.html"):
     net = Network(height="800px", width="100%", directed=True)

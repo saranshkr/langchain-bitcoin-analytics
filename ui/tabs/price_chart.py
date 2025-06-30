@@ -1,4 +1,5 @@
 # File: ui/tabs/price_chart.py
+# Description: Streamlit tab to display the Bitcoin price and volume chart using a pre-generated image
 
 import streamlit as st
 import os
@@ -16,7 +17,7 @@ def render():
     )
     chart_path = "btc_price_volume.png"
     if os.path.exists(chart_path):
-        st.image(chart_path, caption="Bitcoin Price and 24h Volume (Last 2 Days)", use_container_width=True)
+        st.image(chart_path, caption="Bitcoin Price and 24h Volume (Last 7 Days)", use_container_width=True)
         try:
             df = pd.read_csv("btc_price_volume.csv")
             if len(df) < 12:

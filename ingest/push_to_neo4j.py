@@ -1,3 +1,6 @@
+# File: ingest/push_to_neo4j.py
+# Description: Reads fetched Bitcoin data from disk and pushes it to the Neo4j database as Transaction nodes
+
 import os
 import json
 from pathlib import Path

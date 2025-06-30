@@ -1,4 +1,5 @@
 # File: ui/utils/helpers.py
+# Description: Neo4j query and formatting utilities for Streamlit dashboard (metrics, query execution, flattening)
 
 import os
 import pandas as pd
