@@ -1,4 +1,4 @@
-# 📊 Real-time Bitcoin Analytics Dashboard with LangChain & Neo4j
+# 📊 Real-time Bitcoin Analytics with LangChain & Neo4j
 
 A real-time dashboard for exploring Bitcoin transaction data using Neo4j, LangChain (LLM-powered Q&A), and Streamlit. Supports natural language query generation, graph visualization, wallet activity stats, and price/volume trends.
 
