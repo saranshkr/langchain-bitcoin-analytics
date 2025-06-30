@@ -1,4 +1,5 @@
 # File: ui/tabs/stats_tab.py
+# Description: Streamlit tab for displaying node and edge statistics, top wallets, and daily transaction trends
 
 import streamlit as st
 import pandas as pd

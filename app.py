@@ -1,5 +1,5 @@
 # File: app.py
-# Streamlit dashboard with modularized tabs and Neo4j queries
+# Description: Streamlit dashboard with modularized tabs and Neo4j queries
 
 import streamlit as st
 import streamlit.components.v1 as components

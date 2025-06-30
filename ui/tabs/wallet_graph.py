@@ -1,4 +1,5 @@
 # File: ui/tabs/wallet_graph.py
+# Description: Streamlit tab for rendering the wallet–transaction graph and related statistics
 
 import streamlit as st
 import streamlit.components.v1 as components

@@ -1,7 +1,7 @@
-# ingest/fetch_transactions.py
+# File: ingest/fetch_transactions.py
+# Description: Periodically fetches real-time Bitcoin price and volume data from CoinGecko and saves it to disk
 
 import requests
-import time
 import datetime
 import json
 from pathlib import Path
@@ -33,16 +33,10 @@ if __name__ == "__main__":
     out_dir = Path("data/raw")
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    i = 0
-
-    while i < 10:
-        data = fetch_bitcoin_data()
-        if data:
-            # print(data)
-            ts = data["timestamp"].replace(":", "-")
-            out_file = out_dir / f"btc_data_{ts}.json"
-            with open(out_file, "w") as f:
-                json.dump(data, f, indent=2)
-        time.sleep(30)
-
-        i += 1
+    data = fetch_bitcoin_data()
+    if data:
+        ts = data["timestamp"].replace(":", "_")
+        out_path = out_dir / f"{ts}.json"
+        with open(out_path, "w") as f:
+            json.dump(data, f, indent=2)
+        print(f"✅ Saved to {out_path}")
