@@ -1,121 +1,114 @@
-# 📊 Real-time Bitcoin Analytics with LangChain & Neo4j
+# 📊 Real-time Bitcoin Analytics Dashboard with LangChain & Neo4j
 
-This project ingests real-time Bitcoin market data, stores it in a property graph (Neo4j), and enables interactive analytics via a modular Streamlit dashboard. Natural language Q&A is supported using local LLMs via Ollama.
+A real-time dashboard for exploring Bitcoin transaction data using Neo4j, LangChain (LLM-powered Q&A), and Streamlit. Supports natural language query generation, graph visualization, wallet activity stats, and price/volume trends.
 
----
+<br>
 
-## 🔧 Tech Stack
+## 🧩 Features
 
-- **Python** – ETL pipeline, data transformation, and orchestration
-- **Neo4j (AuraDB / Local)** – Graph database for modeling BTC transactions
-- **LangChain + Ollama (Mistral)** – Local LLM for query generation and summarization
-- **Streamlit** – Dashboard for real-time visualization and interaction
-- **Pyvis, Altair** – Graph and chart visualizations
-- **CoinGecko API** – Source of live Bitcoin price and volume data
+- **Real-time ingestion** of Bitcoin transactions
+- **Cypher query generation** from natural language using LangChain + Mistral
+- **Interactive wallet graph** (Pyvis)
+- **Statistical summaries** (daily tx counts, top wallets, 24h stats)
+- **Price chart** with 5-point moving average & 24h volume bars
+- **Q&A mode** for explainable query interaction
+- **Auto-refresh support** per tab
+- **Custom ingestion pipeline** (fetch, push, simulate)
 
----
+<br>
 
-## 📂 Project Structure
+## 📁 Project Structure
 
 ```
-langchain-bitcoin-analytics/
-├── app.py                             # Main dashboard entrypoint
-├── analysis/                          # Scripts for querying and summarization
-│   ├── graph_pyvis.py                 # Visualize transaction graph with Pyvis
-│   ├── langchain_qa.py                # Natural language → Cypher interface
-│   ├── langchain_summary.py           # Summary generation with Mistral
-│   └── price_chart.py                 # BTC price/volume visualization
-├── db/
-│   └── push_to_neo4j.py               # Push parsed data into Neo4j
-├── ingest/
-│   └── fetch_transactions.py          # Fetch real-time BTC market data
-├── pipeline/
-│   └── run_pipeline.py                # Optional: Run ingestion + simulation in one go
-├── simulation/
-│   └── simulate_wallets.py            # Generate synthetic wallets and link to txns
-├── ui/
-│   ├── tabs/                          # Code for individual Streamlit dashboard tabs
-│   └── utils/                         # Shared functions: query, graph, refresh
-├── utils/
-│   └── cleanup.py                     # Dev utility for cleaning/reseting the database
-├── notebooks/                         # Optional: Jupyter-based exploration
-├── requirements.txt
-├── .env                               # API keys and Neo4j credentials
+.
 ├── README.md
-└── todo.txt                           # Developer TODOs and feature planning
+├── analysis
+│   ├── graph_pyvis.py             # Generates wallet graph from Neo4j
+│   ├── langchain_qa.py            # Natural language to Cypher query
+│   ├── langchain_summary.py       # Summary generator using LangChain
+│   └── price_chart.py             # BTC price/volume chart
+├── app.py                         # Streamlit dashboard entry point
+├── ingest
+│   ├── fetch_transactions.py      # Get BTC data from external API
+│   ├── push_to_neo4j.py           # Push new transactions to Neo4j
+│   ├── run_pipeline.py            # Runs fetch + push + simulation as threads
+│   └── simulate_wallets.py        # Adds Wallet nodes & edges to txns
+├── requirements.txt
+├── run.sh                         # Shell script to regenerate data + launch dashboard
+├── todo.txt
+├── ui
+│   ├── tabs
+│   │   ├── price_chart.py
+│   │   ├── query_explorer.py
+│   │   ├── stats_tab.py
+│   │   ├── summary_tab.py
+│   │   └── wallet_graph.py
+│   └── utils
+│       ├── autorefresh.py         # Utility for per-tab auto-refresh
+│       └── helpers.py             # Shared Neo4j query helpers
+└── utils
+    └── cleanup.py                 # Optional cleanup script
 ```
 
----
+<br>
 
-## ✅ Features
+## 🚀 Setup Instructions
 
-- 📥 Real-time BTC market data ingestion (price, volume, market cap)
-- 🔄 Synthetic transaction simulation using deterministic wallet links
-- 🧠 Natural language Q&A with LangChain + Mistral via Ollama
-- 🔗 Interactive graph exploration with Pyvis
-- 📊 Multi-tab Streamlit dashboard: price chart, wallet graph, summary, stats, Q&A
-- 🧾 Editable Cypher queries with explanations and live results
+### 1. Install dependencies
 
----
+```bash
+pip install -r requirements.txt
+```
 
-## 🚀 Setup
+Ensure you have [Ollama](https://ollama.com/) running with the `mistral` model for local LLM inference.
 
-1. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 2. Create your `.env` file:
 
-2. **Start Ollama + Mistral model**
-   ```bash
-   ollama run mistral
-   ```
+```bash
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=your_password
+```
 
-3. **Create a `.env` file with your Neo4j credentials**
-   ```
-   NEO4J_URI=bolt://localhost:7687
-   NEO4J_USER=neo4j
-   NEO4J_PASSWORD=your_password
-   ```
-
-4. **Run the Streamlit dashboard**
-   ```bash
-   streamlit run app.py
-   ```
-
----
+<br>
 
 ## 📌 Example Workflow
 
+### Start the ingestion pipeline
+
 ```bash
-# Step 1: Fetch BTC market data
-python ingest/fetch_transactions.py
-
-# Step 2: Push to Neo4j
-python db/push_to_neo4j.py
-
-# Step 3: Simulate wallets and generate relations
-python simulation/simulate_wallets.py
-
-# Step 4: Generate charts and summaries
-python analysis/price_chart.py
-python analysis/langchain_summary.py
-python analysis/graph_pyvis.py
+python ingest/run_pipeline.py
 ```
 
----
+Use Ctrl+C to stop the pipeline
 
-## 💡 Demo Use Cases
+### Run the regeneration scripts (optional) and launch dashboard
 
-- Ask: “Which wallets received the most transactions last week?”
-- See: Real-time rolling Bitcoin price + volume chart
-- Explore: Transaction graph with colored wallets and directional edges
-- Edit: Cypher queries with inline explanations and results
+```bash
+bash run.sh [--regen]
+```
 
----
+<br>
+
+## 💬 Example Questions
+
+- Who received the highest transaction volume this week?
+- Show wallets that sent transactions yesterday
+- What are total transactions in the last 24 hours?
+- Top 5 receivers this month?
+
+<br>
+
+## 🧠 Powered by
+
+- [Neo4j](https://neo4j.com/) for graph storage
+- [LangChain](https://github.com/langchain-ai/langchain) + [Ollama](https://ollama.com/) for local LLM reasoning
+- [Streamlit](https://streamlit.io/) for interactive UI
+
+<br>
 
 ## 🧠 Author
 
 **Saransh Kumar**  
-📍 College Park, MD  
 🔗 [linkedin.com/in/saransh-kr](https://linkedin.com/in/saransh-kr)  
 🔗 [github.com/saranshkr](https://github.com/saranshkr)
